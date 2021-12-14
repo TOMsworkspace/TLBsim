@@ -30,8 +30,9 @@ unified MMU :
 **Output:**
 &emsp;output file in the result subdirectory.
 
-| :-----:  | :-----:             | :-----:         |  
+
 |          |hit count            |miss count       |  
+| :-----:  | :-----:             | :-----:         |  
 |L1 TLB    |L1_TLB hit count     |L1_TLB miss count|  
 |L2 TLB    |L2_TLB hit count     |L2_TLB miss count|  
 |L2 PTC    |L2_PTC hit count     |L3_PTC miss count|  
