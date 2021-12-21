@@ -11,7 +11,9 @@
 
 #include <iostream>
 #include <fstream>
-#include <intrin.h>
+
+#include <climits>
+//#include <intrin.h>
 
 #include "TLB.h"
 #include "UnifiedTP.h"

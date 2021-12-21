@@ -11,7 +11,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <intrin.h>
+//#include <intrin.h>
 #include <string>
 
 using namespace std;

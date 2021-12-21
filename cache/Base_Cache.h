@@ -9,6 +9,7 @@
 #include <cmath>
 #include <iostream>
 #include <iomanip>
+#include <climits>
 
 
 enum cacheAction{Hit='H',Miss='M'};
