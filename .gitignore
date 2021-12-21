@@ -1,3 +1,5 @@
 build
 result
 .vscode
+
+result/*
