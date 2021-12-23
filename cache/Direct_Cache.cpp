@@ -103,6 +103,20 @@ bool Direct_Cache::check_cache_hit(const _u64 & addr) const
     return false;
 }
 
+
+bool Direct_Cache::flush_cache(_u64 tag){
+    _u64 line=tag % cache_line_num;
+
+    if(caches[line].isVaild()&&caches[line].getTag()==tag) { //数据有效，标签匹配，命中
+        caches[line].setVaild(false);
+        caches[line].setDirty(false);
+
+        return true;
+    }
+
+    return false;
+}
+
 /*
  * 更新读相关计数和状态*/
 
@@ -155,7 +169,7 @@ _u64 Direct_Cache::find_victim(const _u64& addr)
     _u64 tag=(addr>>cache_line_shifts);
     if(!caches[line].isVaild()) {
         this->cache_capacity_miss_count++;
-        this->cur_victimtag = ULLONG_MAX;
+        this->cur_victimtag = INVALID_TAG;
     }
     else if(caches[line].getTag()!=tag){
         this->cache_conflict_miss_count++;

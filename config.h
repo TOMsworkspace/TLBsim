@@ -12,8 +12,13 @@
 #ifndef TLBSIM_CONFIG_H_
 #define TLBSIM_CONFIG_H_
 
+
 typedef unsigned long long _u64;
 typedef unsigned int _u32;
+
+const _u32 PAGE_SIZE_SHIFT = 12; //PAGE SIZE 4 kB = 2 ^ CACHE_BLOCK_SIZE_SHIFT B
+
+
 
 const float sys_freq = 2200000000; //hz
 const float cycle_to_time = 1e9 / sys_freq; // ns / cycles; 

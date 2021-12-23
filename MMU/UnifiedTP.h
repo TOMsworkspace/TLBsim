@@ -16,7 +16,9 @@
 #include "Direct_Cache.h"
 #include "config.h"
 
-enum unifiedTP_type{u_PTC, u_TLB};
+enum unifiedTP_access_type{u_L2PTC, u_L3PTC, u_L4PTC, u_TLB, u_PTC};
+
+enum unifiedTP_access_result_type{u_L2PTC_HIT, u_L3PTC_HIT, u_L4PTC_HIT, u_L4PTC_MISS, u_TLB_HIT, u_TLB_MISS};
 
 class unifiedTP
 {
@@ -51,13 +53,29 @@ public:
     /**
      * @brief 
      * 
-     * @param v_addr 虚拟地址
-     * @return true : 命中
-     * @return false ： 未命中
+     * @param v_addr 
+     * @param type 更新TLB/PTC
+     * @return true 
+     * @return false 
      */
-    bool unifiedTP_handle(_u64 v_addr, enum::unifiedTP_type type);
+    bool unifiedTP_update(_u64 v_addr, enum unifiedTP_access_type type);
+
+    bool unifiedTP_victim_tag_update(_u64 victim_tag);
+
+
+    /**
+     * @brief 
+     * 
+     * @param v_addr 虚拟地址
+     * @return unifiedTP_access_result_type
+     */
+    unifiedTP_access_result_type unifiedTP_check_hit(_u64 v_addr, enum unifiedTP_access_type type);
+
+    _u64 get_victim_tag() const;
 
     bool flush();
+
+    bool flush(_u64 tag);
 
     _u64 get_op_count() const;
 

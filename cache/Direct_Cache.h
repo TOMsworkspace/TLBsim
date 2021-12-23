@@ -36,15 +36,25 @@ public:
      */
     virtual bool check_cache_hit(const _u64 & addr) const;
 
-public:
-
     /**
      * 根据替换算法查找替换行
      * addr: 请求的地址
      * return: 返回受害者line号
      */
 
-    _u64 find_victim(const _u64& addr);
+    virtual _u64 find_victim(const _u64& addr) override;
+
+    
+    virtual bool flush_cache(_u64 tag) override;
+
+    // std::ostream & print (std::ostream & os) const;
+
+    friend std::ostream & operator << (std::ostream & os,const Direct_Cache& cache);
+
+
+protected:
+
+
 
     virtual bool read_cache(const _u64 & line) override;
 
@@ -53,9 +63,6 @@ public:
     virtual int lock_cache_line(_u64 addr) override {return addr;}
     virtual int unlock_cache_line(_u64 addr) override{return addr;}
 
-   // std::ostream & print (std::ostream & os) const;
-
-    friend std::ostream & operator << (std::ostream & os,const Direct_Cache& cache);
 
 
 };

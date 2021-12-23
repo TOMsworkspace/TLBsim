@@ -56,6 +56,8 @@ public:
      */
     virtual bool check_cache_hit(const _u64 & addr) const override;
 
+    virtual bool flush_cache(_u64 addr) override;
+
 
     /**获取cache当前set中空余的line*/
     virtual _u64 get_cache_free_line(const _u64 &addr) const;

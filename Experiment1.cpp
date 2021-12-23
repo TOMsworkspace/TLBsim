@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
         string benchname = string(argv[i]); // bench 
 
         if(!BENCHS.count(benchname)){
-            std::cerr <<  "Input bench name " << benchname << "is not exist!!" << endl;
+            std::cerr <<  "Input bench name " << benchname << " is not exist!!" << endl;
             return 1;
         }
 
@@ -178,9 +178,36 @@ void load_trace_arch2(const string & benchname, TLB & L1_TLB, unifiedTP & L2_UTP
             continue;
         }
         else{
-            bool tlb_hit = L2_UTP.unifiedTP_handle(v_addr, unifiedTP_type::u_TLB);
-            if(!tlb_hit)
-                L2_UTP.unifiedTP_handle(v_addr, unifiedTP_type::u_PTC);
+            enum unifiedTP_access_result_type tlb_result = L2_UTP.unifiedTP_check_hit(v_addr, u_TLB);
+            if(tlb_result == u_TLB_MISS){
+                enum unifiedTP_access_result_type ptc_result = L2_UTP.unifiedTP_check_hit(v_addr, u_PTC);
+                switch (ptc_result)
+                {
+                    case u_L2PTC_HIT:
+                        /* code */
+                        L2_UTP.unifiedTP_update(v_addr, u_L2PTC);
+                        break;
+                    case u_L3PTC_HIT:
+                        /* code */
+                        L2_UTP.unifiedTP_update(v_addr, u_L3PTC);
+                        L2_UTP.unifiedTP_update(v_addr, u_L2PTC);
+                        break;
+                    case u_L4PTC_HIT:
+                        /* code */
+                        L2_UTP.unifiedTP_update(v_addr, u_L4PTC);
+                        L2_UTP.unifiedTP_update(v_addr, u_L3PTC);
+                        L2_UTP.unifiedTP_update(v_addr, u_L2PTC);
+                        break;
+                    
+                    case u_L4PTC_MISS:
+                        L2_UTP.unifiedTP_update(v_addr, u_L4PTC);
+                        L2_UTP.unifiedTP_update(v_addr, u_L3PTC);
+                        L2_UTP.unifiedTP_update(v_addr, u_L2PTC);
+                        break;
+                }
+            }
+
+            L2_UTP.unifiedTP_update(v_addr, u_TLB);
         }
     }
 

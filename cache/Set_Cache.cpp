@@ -115,6 +115,25 @@ bool Set_Cache::check_cache_hit(const _u64 & addr) const {
     return false;
 }
 
+bool Set_Cache::flush_cache(_u64 tag){
+    _u32 set = tag % cache_set_num;
+    _u64 line = set*cache_ways;
+
+    _u64 bound = line + cache_ways;
+
+    for(_u64 i = line;i < bound;i++) {
+
+        if (caches[i].isVaild() && caches[i].getTag() == tag){  //数据有效，标签匹配，命中
+            caches[i].setDirty(false);
+            caches[i].setVaild(false);
+            return true;
+        }
+
+    }
+
+    return false;
+}
+
 
 /**获取cache当前set中空余的line*/
 _u64 Set_Cache::get_cache_free_line(const _u64 &addr) const {
@@ -141,8 +160,8 @@ _u64 Set_Cache::find_victim(const _u64& addr) {
 
     _u64 line = get_cache_free_line(addr);
 
-    if(line<cache_line_num){  //有空行
-        this->cur_victimtag=ULLONG_MAX;
+    if(line < cache_line_num){  //有空行
+        this->cur_victimtag = INVALID_TAG;
         this->cache_capacity_miss_count++;
         return line;
     }

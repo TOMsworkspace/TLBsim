@@ -12,7 +12,7 @@
 #include <iostream>
 #include <fstream>
 
-#include <climits>
+
 //#include <intrin.h>
 
 #include "TLB.h"
@@ -185,23 +185,127 @@ void load_trace_arch2(const string & benchname, TLB & L1_TLB, unifiedTP & L2_UTP
             continue;
         }
         else{
-            if(L2_UTP.unifiedTP_handle(v_addr, unifiedTP_type::u_TLB)){ //L2 unifiedTP TLB hit
-                continue;
-            }
-            else{
-                if(L3_UTP.unifiedTP_handle(v_addr, unifiedTP_type::u_TLB)){//L3 unifiedTP TLB hit
-                    continue;
-                }
-                else{
-                    if(L2_UTP.unifiedTP_handle(v_addr, unifiedTP_type::u_PTC)){ //L2 unifiedTP PTC hit
-                        continue;
+            enum unifiedTP_access_result_type l2_tlb_result = L2_UTP.unifiedTP_check_hit(v_addr, u_TLB);
+            if(l2_tlb_result == u_TLB_MISS){
+                enum unifiedTP_access_result_type l3_tlb_result = L3_UTP.unifiedTP_check_hit(v_addr, u_TLB);
+                if(l3_tlb_result == u_TLB_MISS){
+
+                    enum unifiedTP_access_result_type l2_ptc_result = L2_UTP.unifiedTP_check_hit(v_addr, u_PTC);
+
+                    if(l2_ptc_result == u_L4PTC_MISS)
+                    {
+                        enum unifiedTP_access_result_type l3_ptc_result =  L3_UTP.unifiedTP_check_hit(v_addr, u_PTC);
+                        
+                        _u64 victim_tag;
+                        
+                        switch (l3_ptc_result)
+                        {
+                            case u_L2PTC_HIT:
+                                /* code */
+
+                                L3_UTP.flush(v_addr >> (PAGE_SIZE_SHIFT + 9));
+                                L2_UTP.unifiedTP_update(v_addr, u_L2PTC);
+                                victim_tag = L2_UTP.get_victim_tag();
+                                L3_UTP.unifiedTP_victim_tag_update(victim_tag);
+                                break;
+                            case u_L3PTC_HIT:
+                                /* code */
+                                L3_UTP.flush(v_addr >> (PAGE_SIZE_SHIFT + 18));
+                                L2_UTP.unifiedTP_update(v_addr, u_L3PTC);
+                                victim_tag = L2_UTP.get_victim_tag();
+                                L3_UTP.unifiedTP_victim_tag_update(victim_tag);
+
+                                L2_UTP.unifiedTP_update(v_addr, u_L2PTC);
+                                victim_tag = L2_UTP.get_victim_tag();
+                                L3_UTP.unifiedTP_victim_tag_update(victim_tag);
+                                break;
+                            case u_L4PTC_HIT:
+                                L3_UTP.flush(v_addr >> (PAGE_SIZE_SHIFT + 27));
+                            case u_L4PTC_MISS:
+                                /* code */
+                                L2_UTP.unifiedTP_update(v_addr, u_L4PTC);
+                                victim_tag = L2_UTP.get_victim_tag();
+                                L3_UTP.unifiedTP_victim_tag_update(victim_tag);
+
+                                L2_UTP.unifiedTP_update(v_addr, u_L3PTC);
+                                victim_tag = L2_UTP.get_victim_tag();
+                                L3_UTP.unifiedTP_victim_tag_update(victim_tag);
+
+                                L2_UTP.unifiedTP_update(v_addr, u_L2PTC);
+                                victim_tag = L2_UTP.get_victim_tag();
+                                L3_UTP.unifiedTP_victim_tag_update(victim_tag);
+                                break;
+                            
+                            default:
+                                break;
+                        }
+                        
                     }
                     else{
-                        //L2 unifiedTP TLB miss
-                        L3_UTP.unifiedTP_handle(v_addr, unifiedTP_type::u_PTC);
+
+                        switch (l2_ptc_result)
+                        {
+                            _u64 victim_tag;
+                            case u_L2PTC_HIT:
+                                /* code */
+                                L2_UTP.unifiedTP_update(v_addr, u_L2PTC);
+                                break;
+                            case u_L3PTC_HIT:
+                                /* code */
+                                L2_UTP.unifiedTP_update(v_addr, u_L3PTC);
+                                L2_UTP.unifiedTP_update(v_addr, u_L2PTC);
+                                victim_tag = L2_UTP.get_victim_tag();
+                                L3_UTP.unifiedTP_victim_tag_update(victim_tag);
+                                break;
+                            case u_L4PTC_HIT:
+                                /* code */
+                                L2_UTP.unifiedTP_update(v_addr, u_L4PTC);
+                                L2_UTP.unifiedTP_update(v_addr, u_L3PTC);
+                                victim_tag = L2_UTP.get_victim_tag();
+                                L3_UTP.unifiedTP_victim_tag_update(victim_tag);
+                                L2_UTP.unifiedTP_update(v_addr, u_L2PTC);
+                                victim_tag = L2_UTP.get_victim_tag();
+                                L3_UTP.unifiedTP_victim_tag_update(victim_tag);
+                                break;
+                            
+                            default:
+                                L2_UTP.unifiedTP_update(v_addr, u_L4PTC);
+                                victim_tag = L2_UTP.get_victim_tag();
+                                L3_UTP.unifiedTP_victim_tag_update(victim_tag);
+                                L2_UTP.unifiedTP_update(v_addr, u_L3PTC);
+                                victim_tag = L2_UTP.get_victim_tag();
+                                L3_UTP.unifiedTP_victim_tag_update(victim_tag);
+                                L2_UTP.unifiedTP_update(v_addr, u_L2PTC);
+                                victim_tag = L2_UTP.get_victim_tag();
+                                L3_UTP.unifiedTP_victim_tag_update(victim_tag);
+                                break;
+                        }
+
                     }
+
+                    L2_UTP.unifiedTP_update(v_addr, u_TLB);
+
+                    _u64 victim_tag = L2_UTP.get_victim_tag();
+
+                    L3_UTP.unifiedTP_victim_tag_update(victim_tag);
+                    
+                }
+                else{
+
+                    L3_UTP.flush(v_addr >> PAGE_SIZE_SHIFT);
+                    
+                    L2_UTP.unifiedTP_update(v_addr, u_TLB);
+
+                    _u64 victim_tag = L2_UTP.get_victim_tag();
+
+                    L3_UTP.unifiedTP_victim_tag_update(victim_tag);
+
                 }
             }
+            else{
+                L2_UTP.unifiedTP_update(v_addr, u_TLB);
+            }
+
         }
     }
 

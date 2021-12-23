@@ -45,7 +45,102 @@ unifiedTP::~unifiedTP()
 {
 }
 
-bool unifiedTP::unifiedTP_handle(_u64 v_addr, enum::unifiedTP_type type){
+bool unifiedTP::unifiedTP_update(_u64 v_addr, enum unifiedTP_access_type type){
+    
+
+    switch (type)
+    {
+        case u_TLB:
+            cache->do_cache_op(v_addr);
+            break;
+        case u_L2PTC:
+            cache->do_cache_op(v_addr >> 9);
+            break;
+        case u_L3PTC:
+            cache->do_cache_op(v_addr >> 18);
+            break;
+        case u_L4PTC:
+            cache->do_cache_op(v_addr >> 27);
+            break;
+        default:
+            return false;
+    }
+
+    return true;
+    
+}
+
+bool unifiedTP::unifiedTP_victim_tag_update(_u64 victim_tag){
+    if(victim_tag != INVALID_TAG){
+        unifiedTP_update(victim_tag << PAGE_SIZE_SHIFT, u_TLB);
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+unifiedTP_access_result_type unifiedTP::unifiedTP_check_hit(_u64 v_addr, enum unifiedTP_access_type type){
+    unifiedTP_access_count++;
+
+    //check TLB
+    if(type == u_TLB){
+        TLB_access_count++;
+
+        if(cache->check_cache_hit(v_addr)){ //TLB命中
+            TLB_hit_count++;
+
+            return u_TLB_HIT;
+        }
+        else{
+            return u_TLB_MISS;
+        }
+    }
+    
+    
+    if(type == u_PTC){
+    
+        //check PTW
+
+        PTW_access_count++;
+
+        int level;
+
+        for(level = 1; level <= 3; ++level){
+            Level_PTC_access_count[level - 1]++;
+            if(cache->check_cache_hit(v_addr >> (9 * level)))
+                break;    
+        }
+
+        if(level <= 3){
+            Level_PTC_hit_count[level - 1]++;
+        }
+
+        switch (level)
+        {
+        case 1:
+            return u_L2PTC_HIT;
+            break;
+        case 2:
+            return u_L3PTC_HIT;
+            break;
+        case 3:
+            return u_L4PTC_HIT;
+            break;    
+        default:
+            return u_L4PTC_MISS;
+            break;
+        }
+    }
+}
+
+_u64 unifiedTP::get_victim_tag() const {
+    return cache->get_victim_tag();
+}
+
+/**
+bool unifiedTP::unifiedTP_handle(_u64 v_addr, enum::unifiedTP_access_type type){
 
     unifiedTP_access_count++;
 
@@ -91,6 +186,12 @@ bool unifiedTP::unifiedTP_handle(_u64 v_addr, enum::unifiedTP_type type){
         return false;
     }
 }
+**/
+
+bool unifiedTP::flush(_u64 tag){
+    return cache->flush_cache(tag);
+}
+
 
 bool unifiedTP::flush(){
     cache->flush_cache();

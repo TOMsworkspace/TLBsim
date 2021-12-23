@@ -12,6 +12,8 @@
 #include <climits>
 
 
+#define INVALID_TAG ULLONG_MAX 
+
 enum cacheAction{Hit='H',Miss='M'};
 
 enum operation{READ='r',WRITE='w'};
@@ -167,17 +169,12 @@ public:
         return cur_addr;
     }
 
-    /**lock a cache line*/
-    virtual int lock_cache_line(_u64 addr)=0;
-    /**unlock a cache line*/
-    virtual int unlock_cache_line(_u64 addr)=0;
-    /**@return 返回miss率*/
+    virtual bool flush_cache(_u64 tag) = 0;
 
     /**
     * @brief flush cache(set every cacheline invalid and is not dirty)
     * 
     */
-
     virtual bool flush_cache(){
         for(int idx = 0; idx < cache_line_num; ++idx){
             caches[idx].setVaild(false);
@@ -285,6 +282,11 @@ protected:
             return false;
         }
     }
+
+    /**lock a cache line*/
+    virtual int lock_cache_line(_u64 addr)=0;
+    /**unlock a cache line*/
+    virtual int unlock_cache_line(_u64 addr)=0;
 };
 
 #endif //CACHESIM_MASTER_BASE_CACHE_H
